@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Scramble Challenge 🧠</title>
+    <!-- Tailwind CSS for modern premium styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for beautiful modern icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti for victory celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
+        }
+        /* Custom scrollbar for definitions/stats list */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+        /* Animation keyframes */
+        @keyframes popIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-100 flex items-center justify-center p-4 overflow-x-hidden">
+
+    <div class="w-full max-w-4xl bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-3xl shadow-2xl p-6 md:p-8 relative">
+        
+        <!-- Header area -->
+        <header class="text-center mb-8">
+            <div class="inline-flex items-center gap-3 bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-2 rounded-full shadow-lg mb-3">
+                <i class="fa-solid fa-brain text-yellow-300 text-lg animate-bounce"></i>
+                <span class="text-sm font-bold tracking-wider uppercase">Vocabulary Arena</span>
+            </div>
+            <h1 class="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-indigo-200 to-purple-400">
+                Word Scramble
+            </h1>
+            <p class="text-slate-400 mt-2 text-sm md:text-base">Sắp xếp các chữ cái để tìm từ vựng đúng. Hoàn thành 12 từ để chiến thắng!</p>
+        </header>
+
+        <!-- 1. START SCREEN -->
+        <div id="screen-start" class="space-y-6 animate-pop">
+            <div class="bg-slate-800/50 border border-slate-700/30 p-6 rounded-2xl max-w-xl mx-auto space-y-4">
+                <h3 class="text-lg font-semibold text-teal-400 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-circle-info"></i> Luật Chơi Thử Thách
+                </h3>
+                <p class="text-slate-300 text-sm text-center leading-relaxed">
+                    Bạn cần hoàn thành chính xác <strong class="text-teal-400">12 từ vựng</strong> để giành chiến thắng. <br>
+                    Mỗi trận đấu, bạn chỉ được cung cấp tối đa <strong class="text-amber-400"><i class="fa-solid fa-lightbulb"></i> 5 lần trợ giúp gợi ý nghĩa Tiếng Việt</strong>. Hãy suy nghĩ thật kỹ trước khi kích hoạt gợi ý nhé!
+                </p>
+            </div>
+
+            <!-- Players Setup Inputs -->
+            <div id="player-inputs-container" class="max-w-xl mx-auto space-y-3">
+                <div id="input-p1-wrapper" class="space-y-1">
+                    <label class="text-xs text-slate-400 font-semibold uppercase tracking-wider block">Tên Người Chơi:</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-circle-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                        <input type="text" id="input-p1" value="Người chơi" class="w-full bg-slate-950/60 border border-slate-700 focus:border-indigo-500 rounded-xl py-3 pl-11 pr-4 text-white focus:outline-none transition-all">
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <button id="btn-start" class="px-10 py-4 bg-gradient-to-r from-teal-500 via-indigo-500 to-purple-600 text-white font-bold rounded-2xl shadow-xl shadow-indigo-950/50 hover:brightness-110 active:scale-95 transition-all text-lg tracking-wide">
+                    Bắt Đầu Thử Thách <i class="fa-solid fa-circle-play ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. GAMEPLAY SCREEN -->
+        <div id="screen-game" class="hidden space-y-6 animate-pop">
+            
+            <!-- Dashboard Info: Scores & Turn -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Player Status Card -->
+                <div id="card-p1" class="bg-gradient-to-br from-indigo-950/40 to-slate-900 border-2 border-indigo-500/40 p-4 rounded-2xl flex items-center justify-between shadow-inner">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 bg-indigo-500/20 text-indigo-400 rounded-xl">
+                            <i class="fa-solid fa-crown text-lg"></i>
+                        </div>
+                        <div>
+                            <h4 id="display-p1-name" class="font-bold text-white truncate max-w-[120px]">Người chơi</h4>
+                            <span class="text-xs text-indigo-300">Tiến trình mục tiêu</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-black text-indigo-400"><span id="score-p1">0</span>/12</div>
+                        <span class="text-[10px] text-slate-400">Từ chính xác</span>
+                    </div>
+                </div>
+
+                <!-- Game Status (Timer) -->
+                <div class="bg-slate-950/50 border border-slate-800 p-4 rounded-2xl flex flex-col justify-center items-center text-center">
+                    <div class="text-xs text-slate-400 font-semibold uppercase tracking-widest mb-1">Thời gian đã chơi</div>
+                    <div id="timer-display" class="text-2xl font-mono font-bold text-teal-400 flex items-center gap-2">
+                        <i class="fa-regular fa-clock animate-pulse"></i> 00:00
+                    </div>
+                </div>
+
+                <!-- Hints Remaining Card -->
+                <div id="card-hints" class="bg-gradient-to-br from-slate-900 to-slate-900/40 border border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-inner">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 bg-amber-500/20 text-amber-400 rounded-xl">
+                            <i class="fa-solid fa-lightbulb text-lg animate-pulse"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-white">Gợi ý còn lại</h4>
+                            <span class="text-xs text-amber-300">Nhấp để mở xem từ</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-black text-amber-400"><span id="hints-remaining-display">5</span>/5</div>
+                        <span class="text-[10px] text-slate-400">Lượt khả dụng</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Scramble Display Card -->
+            <div class="bg-slate-800/40 border border-slate-700/50 p-6 md:p-8 rounded-3xl space-y-6 shadow-xl relative overflow-hidden">
+                <div class="absolute -top-12 -right-12 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl"></div>
+                <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl"></div>
+
+                <!-- Scrambled Word Box -->
+                <div class="text-center space-y-2">
+                    <span class="text-xs font-bold text-teal-400 uppercase tracking-widest">Từ Xáo Trộn</span>
+                    <!-- Big glowing display of scrambled characters -->
+                    <div id="scrambled-letters-container" class="flex flex-wrap justify-center gap-2 md:gap-3 py-3 select-none">
+                        <!-- Dynamic tiles will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- Answer input slots area -->
+                <div class="space-y-3">
+                    <div class="text-center">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Đáp án của bạn</span>
+                    </div>
+                    
+                    <!-- Interactive Visual Input Tiles -->
+                    <div id="answer-slots-container" class="flex flex-wrap justify-center gap-2 md:gap-3 min-h-[64px] border-2 border-dashed border-slate-700/60 p-4 rounded-2xl bg-slate-950/30">
+                        <!-- Placed tiles will go here -->
+                    </div>
+
+                    <!-- Keyboard fallback notification -->
+                    <p class="text-center text-[11px] text-slate-500">Mẹo: Bạn có thể click các chữ cái để ghép hoặc gõ trực tiếp từ bàn phím!</p>
+                </div>
+
+                <!-- Expandable Hint Box -->
+                <div id="hint-box" class="bg-slate-900/80 rounded-xl border border-slate-800 p-4 transition-all">
+                    <button id="btn-toggle-hint" class="w-full flex items-center justify-between text-left text-sm text-indigo-400 hover:text-indigo-300 font-semibold focus:outline-none">
+                        <span class="flex items-center gap-2">
+                            <i class="fa-regular fa-lightbulb text-yellow-400 animate-bounce"></i> 
+                            <span id="hint-button-text">Xem Gợi ý nghĩa Tiếng Việt (Còn 5/5)</span>
+                        </span>
+                        <i id="hint-chevron" class="fa-solid fa-chevron-down transition-transform"></i>
+                    </button>
+                    <div id="hint-content" class="mt-2 text-slate-300 text-sm pl-6 border-l-2 border-slate-700/60 transition-all hidden">
+                        <!-- Dynamic hint description -->
+                    </div>
+                </div>
+
+                <!-- Interactive controls buttons row -->
+                <div class="flex flex-wrap items-center justify-between gap-4 pt-2">
+                    <div class="flex gap-2">
+                        <!-- Reset tiles button -->
+                        <button id="btn-reset-letters" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-300 font-semibold rounded-xl text-xs flex items-center gap-1.5 transition-all">
+                            <i class="fa-solid fa-rotate-left"></i> Xếp Lại
+                        </button>
+                        <!-- Skip word button -->
+                        <button id="btn-skip" class="px-4 py-2.5 bg-slate-800/60 hover:bg-red-950/40 hover:text-red-300 border border-slate-700/50 hover:border-red-900/60 text-slate-400 font-semibold rounded-xl text-xs flex items-center gap-1.5 transition-all">
+                            <i class="fa-solid fa-forward-step"></i> Bỏ Qua
+                        </button>
+                    </div>
+
+                    <!-- Submit action button -->
+                    <button id="btn-submit" class="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-teal-500 to-indigo-600 hover:from-teal-400 hover:to-indigo-500 text-white font-bold rounded-xl text-sm shadow-lg shadow-teal-950/40 flex items-center justify-center gap-2 transition-all">
+                        Kiểm Tra Kết Quả <i class="fa-solid fa-circle-check"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Toast Notification Box for Correct / Wrong responses -->
+            <div id="game-feedback" class="hidden flex items-center gap-3 p-4 rounded-xl border animate-pop">
+                <span id="feedback-icon" class="text-xl"></span>
+                <span id="feedback-message" class="text-sm font-semibold"></span>
+            </div>
+        </div>
+
+        <!-- 3. VICTORY SCREEN -->
+        <div id="screen-victory" class="hidden text-center space-y-6 animate-pop py-6">
+            <div class="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-yellow-300 to-amber-500 rounded-full shadow-lg shadow-amber-950/50 mb-2 relative">
+                <i class="fa-solid fa-trophy text-slate-950 text-5xl"></i>
+                <div class="absolute inset-0 bg-yellow-400 animate-ping rounded-full opacity-20 -z-10"></div>
+            </div>
+            
+            <div class="space-y-2">
+                <h2 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-200 to-teal-400">
+                    CHIẾN THẮNG! 🎉
+                </h2>
+                <p id="victory-announcement" class="text-lg text-slate-200">Bạn đã xuất sắc hoàn thành 12 từ!</p>
+            </div>
+
+            <!-- Game Stats Grid -->
+            <div class="max-w-md mx-auto bg-slate-950/60 border border-slate-800 p-5 rounded-2xl text-left space-y-3">
+                <h4 class="text-xs font-bold text-teal-400 uppercase tracking-widest text-center border-b border-slate-800 pb-2">Báo Cáo Thành Tích</h4>
+                <div class="flex justify-between items-center text-sm text-slate-300">
+                    <span>Tổng thời gian:</span>
+                    <span id="stat-time" class="font-bold text-white">02:35</span>
+                </div>
+                <div class="flex justify-between items-center text-sm text-slate-300">
+                    <span>Số từ đã bỏ qua:</span>
+                    <span id="stat-skipped" class="font-bold text-white">2</span>
+                </div>
+                <div class="flex justify-between items-center text-sm text-slate-300">
+                    <span>Gợi ý đã sử dụng:</span>
+                    <span id="stat-hints-used" class="font-bold text-amber-400">0/5</span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex flex-col sm:flex-row justify-center gap-3">
+                <button id="btn-replay" class="px-8 py-3.5 bg-gradient-to-r from-teal-500 to-indigo-600 hover:brightness-110 active:scale-95 text-white font-bold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-rotate-right"></i> Chơi Lại Trận Mới
+                </button>
+                <button id="btn-home" class="px-8 py-3.5 bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 font-bold rounded-xl transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-house"></i> Về Màn Hình Chính
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ================= GAME STATE & DATABASE ================= */
+        const wordsDatabase = [
+            { word: "environment", hint: "Môi trường xung quanh chúng ta." },
+            { word: "average", hint: "Trung bình, bình thường." },
+            { word: "condition", hint: "Điều kiện, trạng thái của một thứ gì đó." },
+            { word: "healthy", hint: "Khỏe mạnh, tốt cho sức khỏe." },
+            { word: "pollute", hint: "Làm ô nhiễm (môi trường, nguồn nước...)." },
+            { word: "deal with", hint: "Giải quyết, đối phó với một vấn đề." },
+            { word: "experts", hint: "Những chuyên gia, người am hiểu sâu về một lĩnh vực." },
+            { word: "improve", hint: "Cải thiện, làm cho tốt lên." },
+            { word: "increase", hint: "Tăng lên (về số lượng, kích thước...)." },
+            { word: "trend", hint: "Xu hướng, trào lưu." },
+            { word: "parade", hint: "Cuộc diễu hành lễ hội." },
+            { word: "support", hint: "Ủng hộ, hỗ trợ." },
+            { word: "crowd", hint: "Đám đông nhiều người." },
+            { word: "gasoline", hint: "Xăng dầu (nhiên liệu cho xe cộ)." },
+            { word: "surge", hint: "Sự dâng lên, tăng vọt một cách đột ngột." },
+            { word: "nutritious", hint: "Bổ dưỡng, giàu chất dinh dưỡng." },
+            { word: "life expectancy", hint: "Tuổi thọ trung bình." },
+            { word: "poverty", hint: "Sự nghèo đói, cảnh nghèo nàn." },
+            { word: "struggling", hint: "Vật lộn, đấu tranh, gặp nhiều khó khăn." },
+            { word: "standards", hint: "Các tiêu chuẩn, quy chuẩn." }
+        ];
+
+        let player1 = { name: "Người chơi", score: 0, skipped: 0 };
+        let winningScore = 12;
+
+        let hintsRemaining = 5;
+        let hintRevealedForCurrentWord = false; // Tracks if hint was already unlocked for current word
+        let availableWordsPool = [];
+        let currentWordObj = null;
+        let scrambledLetters = []; // Letters that are available to click
+        let userChosenLetters = []; // Letters currently in answer slots
+        
+        let timerInterval = null;
+        let secondsPlayed = 0;
+
+        /* ================= WEB AUDIO SYNTHESIZER ================= */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            try {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.12);
+                } else if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+                    osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.45);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(110, audioCtx.currentTime + 0.25);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.35);
+                } else if (type === 'warning') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(220, audioCtx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.2);
+                } else if (type === 'victory') {
+                    const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, idx) => {
+                        const noteOsc = audioCtx.createOscillator();
+                        const noteGain = audioCtx.createGain();
+                        noteOsc.connect(noteGain);
+                        noteGain.connect(audioCtx.destination);
+                        noteOsc.type = 'sine';
+                        noteOsc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.12);
+                        noteGain.gain.setValueAtTime(0.15, audioCtx.currentTime + idx * 0.12);
+                        noteGain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + idx * 0.12 + 0.4);
+                        noteOsc.start(audioCtx.currentTime + idx * 0.12);
+                        noteOsc.stop(audioCtx.currentTime + idx * 0.12 + 0.45);
+                    });
+                }
+            } catch (e) {
+                console.warn("Audio Context error ignored:", e);
+            }
+        }
+
+        /* ================= DOM ELEMENT REFERENCES ================= */
+        const scrStart = document.getElementById('screen-start');
+        const scrGame = document.getElementById('screen-game');
+        const scrVictory = document.getElementById('screen-victory');
+
+        const inputP1 = document.getElementById('input-p1');
+        const btnStart = document.getElementById('btn-start');
+
+        const displayP1Name = document.getElementById('display-p1-name');
+        const scoreP1 = document.getElementById('score-p1');
+        const timerDisplay = document.getElementById('timer-display');
+        const hintsRemainingDisplay = document.getElementById('hints-remaining-display');
+
+        const scrambledLettersContainer = document.getElementById('scrambled-letters-container');
+        const answerSlotsContainer = document.getElementById('answer-slots-container');
+        const btnToggleHint = document.getElementById('btn-toggle-hint');
+        const hintButtonText = document.getElementById('hint-button-text');
+        const hintChevron = document.getElementById('hint-chevron');
+        const hintContent = document.getElementById('hint-content');
+
+        const btnResetLetters = document.getElementById('btn-reset-letters');
+        const btnSkip = document.getElementById('btn-skip');
+        const btnSubmit = document.getElementById('btn-submit');
+        const gameFeedback = document.getElementById('game-feedback');
+        const feedbackIcon = document.getElementById('feedback-icon');
+        const feedbackMessage = document.getElementById('feedback-message');
+
+        const victoryAnnouncement = document.getElementById('victory-announcement');
+        const statTime = document.getElementById('stat-time');
+        const statSkipped = document.getElementById('stat-skipped');
+        const statHintsUsed = document.getElementById('stat-hints-used');
+        const btnReplay = document.getElementById('btn-replay');
+        const btnHome = document.getElementById('btn-home');
+
+        btnStart.addEventListener('click', () => {
+            playSound('click');
+            initializeGame();
+        });
+
+        /* ================= CORE GAMEPLAY LOGIC ================= */
+        function initializeGame() {
+            // Setup player information
+            player1.name = inputP1.value.trim() || "Người chơi";
+            player1.score = 0;
+            player1.skipped = 0;
+            hintsRemaining = 5;
+
+            // Sync scoreboard DOM texts
+            displayP1Name.textContent = player1.name;
+            scoreP1.textContent = "0";
+            updateHintsUI();
+
+            // Initialize words pool (clone deep and shuffle)
+            availableWordsPool = [...wordsDatabase];
+            shuffleArray(availableWordsPool);
+
+            // Hide/Show correct screens
+            scrStart.classList.add('hidden');
+            scrVictory.classList.add('hidden');
+            scrGame.classList.remove('hidden');
+
+            // Reset and start timer
+            clearInterval(timerInterval);
+            secondsPlayed = 0;
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                secondsPlayed++;
+                updateTimerDisplay();
+            }, 1000);
+
+            // Load first scramble
+            loadNextScramble();
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function scrambleWord(word) {
+            const segments = word.split(' ');
+            const scrambledSegments = segments.map(seg => {
+                if (seg.length <= 1) return seg;
+                let arr = seg.split('');
+                let attempts = 0;
+                do {
+                    shuffleArray(arr);
+                    attempts++;
+                } while (arr.join('') === seg && attempts < 15);
+                return arr.join('');
+            });
+            return scrambledSegments.join(' ');
+        }
+
+        function loadNextScramble() {
+            if (availableWordsPool.length === 0) {
+                availableWordsPool = [...wordsDatabase];
+                shuffleArray(availableWordsPool);
+            }
+
+            currentWordObj = availableWordsPool.pop();
+            const originalWord = currentWordObj.word.toLowerCase();
+            const scrambledStr = scrambleWord(originalWord);
+
+            // Reset current word's hint state
+            hintRevealedForCurrentWord = false;
+            hintContent.textContent = currentWordObj.hint;
+            hintContent.classList.add('hidden');
+            hintChevron.classList.remove('rotate-180');
+            updateHintsUI();
+
+            scrambledLetters = [];
+            let index = 0;
+            for (let char of scrambledStr) {
+                scrambledLetters.push({
+                    id: index++,
+                    char: char,
+                    isUsed: false
+                });
+            }
+
+            userChosenLetters = [];
+            hideFeedback();
+            renderScrambledTiles();
+            renderAnswerSlots();
+        }
+
+        function renderScrambledTiles() {
+            scrambledLettersContainer.innerHTML = '';
+            
+            scrambledLetters.forEach(tile => {
+                if (tile.char === ' ') {
+                    const spaceDiv = document.createElement('div');
+                    spaceDiv.className = "w-4 md:w-6";
+                    scrambledLettersContainer.appendChild(spaceDiv);
+                } else {
+                    const btn = document.createElement('button');
+                    btn.textContent = tile.char.toUpperCase();
+                    btn.className = `w-11 h-11 md:w-14 md:h-14 font-extrabold text-lg md:text-xl rounded-xl flex items-center justify-center transition-all ${
+                        tile.isUsed 
+                        ? 'bg-slate-800/20 border border-slate-800 text-slate-700 cursor-not-allowed scale-95 pointer-events-none' 
+                        : 'bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-100 hover:scale-105 active:scale-95 shadow-md active:shadow-none'
+                    }`;
+                    
+                    btn.addEventListener('click', () => {
+                        if (!tile.isUsed) {
+                            selectLetter(tile);
+                        }
+                    });
+                    
+                    scrambledLettersContainer.appendChild(btn);
+                }
+            });
+        }
+
+        function renderAnswerSlots() {
+            answerSlotsContainer.innerHTML = '';
+            
+            const originalWord = currentWordObj.word;
+            let activeCharIndex = 0;
+            for (let i = 0; i < originalWord.length; i++) {
+                if (originalWord[i] === ' ') {
+                    const spaceDiv = document.createElement('div');
+                    spaceDiv.className = "w-6 h-12 flex items-center justify-center text-xl text-slate-600 font-bold select-none";
+                    spaceDiv.textContent = "•";
+                    answerSlotsContainer.appendChild(spaceDiv);
+                } else {
+                    const slotBtn = document.createElement('button');
+                    const fillTile = userChosenLetters[activeCharIndex];
+                    
+                    if (fillTile) {
+                        slotBtn.textContent = fillTile.char.toUpperCase();
+                        slotBtn.className = "w-11 h-11 md:w-14 md:h-14 font-extrabold text-lg md:text-xl rounded-xl flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 border border-indigo-400 text-white shadow-lg animate-pop";
+                        
+                        const capturedTileIndex = activeCharIndex;
+                        slotBtn.addEventListener('click', () => {
+                            deselectLetterAt(capturedTileIndex);
+                        });
+                    } else {
+                        slotBtn.textContent = "";
+                        slotBtn.className = "w-11 h-11 md:w-14 md:h-14 rounded-xl border-2 border-slate-800 bg-slate-900/40 flex items-center justify-center pointer-events-none transition-all";
+                    }
+                    
+                    answerSlotsContainer.appendChild(slotBtn);
+                    activeCharIndex++;
+                }
+            }
+        }
+
+        function selectLetter(tile) {
+            playSound('click');
+            tile.isUsed = true;
+            userChosenLetters.push(tile);
+            renderScrambledTiles();
+            renderAnswerSlots();
+        }
+
+        function deselectLetterAt(idx) {
+            playSound('click');
+            const tile = userChosenLetters[idx];
+            if (tile) {
+                tile.isUsed = false;
+                userChosenLetters.splice(idx, 1);
+                renderScrambledTiles();
+                renderAnswerSlots();
+            }
+        }
+
+        btnResetLetters.addEventListener('click', () => {
+            playSound('click');
+            scrambledLetters.forEach(t => t.isUsed = false);
+            userChosenLetters = [];
+            renderScrambledTiles();
+            renderAnswerSlots();
+        });
+
+        btnSkip.addEventListener('click', () => {
+            playSound('click');
+            player1.skipped++;
+            loadNextScramble();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (scrGame.classList.contains('hidden')) return;
+            
+            const key = e.key.toLowerCase();
+            
+            if (key === 'backspace') {
+                e.preventDefault();
+                if (userChosenLetters.length > 0) {
+                    deselectLetterAt(userChosenLetters.length - 1);
+                }
+            } else if (key === 'enter') {
+                e.preventDefault();
+                checkAnswer();
+            } else if (/^[a-z ]$/.test(key)) {
+                const matchTile = scrambledLetters.find(t => !t.isUsed && t.char === key);
+                if (matchTile) {
+                    selectLetter(matchTile);
+                }
+            }
+        });
+
+        function displayFeedback(status, message) {
+            gameFeedback.className = "flex items-center gap-3 p-4 rounded-xl border animate-pop";
+            
+            if (status === 'success') {
+                playSound('correct');
+                gameFeedback.classList.add('bg-teal-950/30', 'border-teal-500/40', 'text-teal-300');
+                feedbackIcon.innerHTML = `<i class="fa-solid fa-circle-check text-teal-400"></i>`;
+            } else if (status === 'warning') {
+                playSound('warning');
+                gameFeedback.classList.add('bg-amber-950/30', 'border-amber-500/40', 'text-amber-300');
+                feedbackIcon.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400"></i>`;
+            } else {
+                playSound('wrong');
+                gameFeedback.classList.add('bg-red-950/30', 'border-red-500/40', 'text-red-300');
+                feedbackIcon.innerHTML = `<i class="fa-solid fa-circle-xmark text-red-400"></i>`;
+            }
+            
+            feedbackMessage.textContent = message;
+            gameFeedback.classList.remove('hidden');
+        }
+
+        function hideFeedback() {
+            gameFeedback.classList.add('hidden');
+        }
+
+        function updateHintsUI() {
+            hintsRemainingDisplay.textContent = hintsRemaining;
+            if (hintRevealedForCurrentWord) {
+                hintButtonText.textContent = "Xem Gợi ý nghĩa Tiếng Việt (Đã Mở)";
+                btnToggleHint.className = "w-full flex items-center justify-between text-left text-sm text-teal-400 hover:text-teal-300 font-semibold focus:outline-none";
+            } else {
+                hintButtonText.textContent = `Xem Gợi ý nghĩa Tiếng Việt (Còn lại: ${hintsRemaining}/5)`;
+                if (hintsRemaining === 0) {
+                    btnToggleHint.className = "w-full flex items-center justify-between text-left text-sm text-slate-500 cursor-not-allowed font-semibold focus:outline-none";
+                } else {
+                    btnToggleHint.className = "w-full flex items-center justify-between text-left text-sm text-amber-400 hover:text-amber-300 font-semibold focus:outline-none";
+                }
+            }
+        }
+
+        btnToggleHint.addEventListener('click', () => {
+            const isHidden = hintContent.classList.contains('hidden');
+            if (isHidden) {
+                // User wants to show the hint
+                if (!hintRevealedForCurrentWord) {
+                    if (hintsRemaining > 0) {
+                        hintsRemaining--;
+                        hintRevealedForCurrentWord = true;
+                        playSound('click');
+                        updateHintsUI();
+                        hintContent.classList.remove('hidden');
+                        hintChevron.classList.add('rotate-180');
+                    } else {
+                        displayFeedback('warning', 'Bạn đã sử dụng hết 5 lượt gợi ý cho trận đấu này!');
+                    }
+                } else {
+                    playSound('click');
+                    hintContent.classList.remove('hidden');
+                    hintChevron.classList.add('rotate-180');
+                }
+            } else {
+                playSound('click');
+                hintContent.classList.add('hidden');
+                hintChevron.classList.remove('rotate-180');
+            }
+        });
+
+        function checkAnswer() {
+            const originalWord = currentWordObj.word.toLowerCase();
+            
+            let userStringSegments = [];
+            let segmentIndex = 0;
+            
+            for (let i = 0; i < originalWord.length; i++) {
+                if (originalWord[i] === ' ') {
+                    userStringSegments.push(' ');
+                } else {
+                    const chosen = userChosenLetters[segmentIndex++];
+                    if (chosen) {
+                        userStringSegments.push(chosen.char);
+                    }
+                }
+            }
+            
+            const constructedAnswer = userStringSegments.join('');
+
+            if (constructedAnswer === originalWord) {
+                player1.score++;
+                scoreP1.textContent = player1.score;
+
+                displayFeedback('success', `Tuyệt vời! +1 điểm. Đáp án là: ${currentWordObj.word.toUpperCase()}`);
+                
+                btnSubmit.disabled = true;
+
+                setTimeout(() => {
+                    btnSubmit.disabled = false;
+                    checkVictoryConditions();
+                }, 1400);
+
+            } else {
+                displayFeedback('wrong', 'Rất tiếc! Từ xếp chưa chính xác, hãy thử lại hoặc click "Bỏ qua"');
+            }
+        }
+
+        btnSubmit.addEventListener('click', checkAnswer);
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(secondsPlayed / 60).toString().padStart(2, '0');
+            const secs = (secondsPlayed % 60).toString().padStart(2, '0');
+            timerDisplay.innerHTML = `<i class="fa-regular fa-clock animate-pulse"></i> ${mins}:${secs}`;
+        }
+
+        /* ================= VICTORY & REPLAY ================= */
+        function checkVictoryConditions() {
+            if (player1.score >= winningScore) {
+                endGameWithVictory(player1.name);
+            } else {
+                loadNextScramble();
+            }
+        }
+
+        function endGameWithVictory(winnerName) {
+            clearInterval(timerInterval);
+            playSound('victory');
+            
+            var duration = 4 * 1000;
+            var end = Date.now() + duration;
+
+            (function frame() {
+                confetti({
+                    particleCount: 5,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#2dd4bf', '#6366f1', '#a855f7']
+                });
+                confetti({
+                    particleCount: 5,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#2dd4bf', '#6366f1', '#a855f7']
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+
+            scrGame.classList.add('hidden');
+            scrVictory.classList.remove('hidden');
+
+            victoryAnnouncement.innerHTML = `🏆 <span class="text-teal-300 font-extrabold">${winnerName}</span> đã chiến thắng trận đấu!`;
+            
+            const finalMins = Math.floor(secondsPlayed / 60).toString().padStart(2, '0');
+            const finalSecs = (secondsPlayed % 60).toString().padStart(2, '0');
+            statTime.textContent = `${finalMins}:${finalSecs}`;
+            
+            statSkipped.textContent = player1.skipped;
+            statHintsUsed.textContent = `${5 - hintsRemaining}/5`;
+        }
+
+        btnReplay.addEventListener('click', () => {
+            playSound('click');
+            initializeGame();
+        });
+
+        btnHome.addEventListener('click', () => {
+            playSound('click');
+            scrVictory.classList.add('hidden');
+            scrGame.classList.add('hidden');
+            scrStart.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
